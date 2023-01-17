@@ -35,19 +35,28 @@ const config = {
 };
 
 function createDir(src, cb) {
-  if (fs.existsSync(src)) {
+  fs.mkdir(src, (err) => {
+    if (err && err.code === 'EEXIST') { return cb(null); }
+    if (err) { return cb(err); }
+
     cb(null);
-  } else {
-    console.log(); // если убрать этот метод, то появляется ошибка считывания
-    fs.mkdir(src, (err) => {
-      if (err) {
-        cb(err);
-      } else {
-        cb(null);
-      }
-    });
-  }
+  });
 }
+
+// function createDir(src, cb) {
+//   if (fs.existsSync(src)) {
+//     cb(null);
+//   } else {
+//     console.log(); // если убрать этот метод, то появляется ошибка считывания
+//     fs.mkdir(src, (err) => {
+//       if (err) {
+//         cb(err);
+//       } else {
+//         cb(null);
+//       }
+//     });
+//   }
+// }
 
 // function createDir(src, cb) {
 //   fs.exists(src, (exist) => {
