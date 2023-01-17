@@ -34,34 +34,95 @@ const config = {
   delete: args.delete,
 };
 
-if (!fs.existsSync(config.dist)) {
-  fs.mkdirSync(config.dist);
+function createDir(src, cb) {
+  if (fs.existsSync(src)) {
+    cb(null);
+  } else {
+    console.log(); // если убрать этот метод, то появляется ошибка считывания
+    fs.mkdir(src, (err) => {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null);
+      }
+    });
+  }
 }
 
-const readDir = (base) => {
-  const files = fs.readdirSync(base, (err) => { if (err) throw err; });
+// function createDir(src, cb) {
+//   fs.exists(src, (exist) => {
+//     if (exist) {
+//       cb();
+//     } else {
+//       fs.mkdir(src, (err) => {
+//         if (err) {
+//           cb(err);
+//         } else {
+//           cb();
+//         }
+//       });
+//     }
+//   });
+// }
 
-  files.forEach((item) => {
-    const localBase = path.join(base, item);
-    const state = fs.statSync(localBase);
-    if (state.isDirectory()) {
-      readDir(path.join(base, item));
-    } else {
-      const itemDir = path.join(config.dist, item.charAt(0).toLowerCase());
-      const itemPath = path.join(itemDir, item);
-      if (!fs.existsSync(itemDir)) {
-        fs.mkdirSync(itemDir);
-      }
+// function createDir(src, cb) {
+//   fs.access(src, fs.constants.F_OK, (err) => {
+//     if (err) {
+//       fs.mkdir(src, (e) => {
+//         if (e) {
+//           cb(e);
+//         } else {
+//           cb(null);
+//         }
+//       });
+//     } else {
+//       cb(null);
+//     }
+//     // console.log(`${src} ${err ? 'does not exist' : 'exists'}`, err);
+//   });
+// }
 
-      if (!fs.existsSync(itemPath)) {
-        fs.rename(localBase, itemPath, (err) => { if (err) { console.log(err); } });
-      }
-    }
+function sorter(src) {
+  fs.readdir(src, (err, files) => {
+    if (err) throw err;
+    files.forEach((item) => {
+      const localPath = path.join(src, item);
+      fs.stat(localPath, (e, stats) => {
+        if (e) throw e;
+        if (stats.isDirectory()) {
+          sorter(localPath);
+        } else {
+          createDir(config.dist, (err) => {
+            if (err) throw err;
+            const itemDir = path.join(config.dist, item.charAt(0).toLowerCase());
+            createDir(itemDir, (err) => {
+              if (err) throw err;
+              const itemPath = path.join(itemDir, item);
+              fs.access(itemPath, fs.constants.F_OK, (err) => {
+                if (err) {
+                  fs.link(localPath, itemPath, (err) => {
+                    if (err) throw err;
+                    if (config.delete) {
+                      fs.unlink(localPath, (err) => {
+                        if (err) throw err;
+                        fs.rm(src, { recursive: true }, (err) => {
+                          if (err) throw err;
+                        });
+                      });
+                    }
+                  });
+                }
+              });
+            });
+          });
+        }
+      });
+    });
   });
-};
+}
 
-readDir(config.src);
-
-if (config.delete) {
-  fs.rm(config.src, { recursive: true }, (err) => { if (err) { console.log(err); } });
+try {
+  sorter(config.src);
+} catch (err) {
+  console.log(err);
 }
