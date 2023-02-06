@@ -70,7 +70,7 @@ router.post('/upload', (req, res, next) => {
       }
 
       db.get('products').push({
-        "src": `../images/${files.photo.originalFilename}`,
+        "src": `./${files.photo.originalFilename}`,
         "name": fields.name,
         "price": fields.price
       }).write()
