@@ -46,33 +46,31 @@ router.post('/upload', (req, res, next) => {
   const skills = db.get('skills').value()
 
   const form = new formidable.IncomingForm()
-  const upload = path.join('./public', 'assets', 'img', 'products')
+  const upload = path.join(process.cwd(), 'images')
 
   if (!fs.existsSync(upload)) {
     fs.mkdirSync(upload)
   }
 
-  const fileFolder = path.join(process.cwd(), upload)
 
-  form.uploadDir = fileFolder
+  form.uploadDir = upload
 
   form.parse(req, function(err, fields, files) {
     if (err) {
       return next(err)
     }
 
-    const filePath = path.join(fileFolder, files.photo.newFilename)
-    const fileName = path.join(fileFolder, files.photo.originalFilename)
-    fs.rename(filePath, fileName, function(err) {
+    const newFilePath = path.join(upload, files.photo.newFilename)
+    const originalFilePath = path.join(upload, files.photo.originalFilename)
+
+    fs.rename(newFilePath, originalFilePath, function(err) {
       if (err) {
         console.error(err.message)
         return next(err)
       }
 
-      const newFilePath = `./assets/img/products/${files.photo.originalFilename}`
-
       db.get('products').push({
-        "src": newFilePath,
+        "src": `../images/${files.photo.originalFilename}`,
         "name": fields.name,
         "price": fields.price
       }).write()

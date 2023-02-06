@@ -1,14 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../model')
-const data = {
-  skills: db.get('skills').value(),
-  products: db.get('products').value()
-}
 
 
 
 router.get('/', (req, res, next) => {
+  const data = {
+    skills: db.get('skills').value(),
+    products: db.get('products').value()
+  }
   res.render('pages/index', { title: 'Main page', ...data, msgemail: req.flash('email')[0] })
 })
 
