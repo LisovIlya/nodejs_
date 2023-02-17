@@ -21,7 +21,7 @@ app.use(session({ // настройка куки
   }
 }))
 
-app.use(flash())  
+app.use(flash())
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
